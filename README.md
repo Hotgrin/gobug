@@ -1,7 +1,11 @@
 # gobug
 
 [![CI](https://github.com/hotgrin/gobug/actions/workflows/ci.yml/badge.svg)](https://github.com/hotgrin/gobug/actions/workflows/ci.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/hotgrin/gobug)](https://goreportcard.com/report/github.com/hotgrin/gobug)
+[![Go version](https://img.shields.io/github/go-mod/go-version/hotgrin/gobug)](go.mod)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Last commit](https://img.shields.io/github/last-commit/hotgrin/gobug)](https://github.com/hotgrin/gobug/commits/main)
+[![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/hotgrin/gobug/pulls)
 
 The friendliest Go error explainer around. Run your code, and instead of a
 raw compiler dump or a bare stack trace, get a plain-English explanation and
