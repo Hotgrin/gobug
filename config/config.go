@@ -14,10 +14,18 @@ type Config struct {
 	Model  string `json:"model"`
 }
 
+// configDirOverride lets tests point config storage at a temp dir instead
+// of the real OS config dir. Empty in normal operation.
+var configDirOverride string
+
 func path() (string, error) {
-	dir, err := os.UserConfigDir()
-	if err != nil {
-		return "", err
+	dir := configDirOverride
+	if dir == "" {
+		d, err := os.UserConfigDir()
+		if err != nil {
+			return "", err
+		}
+		dir = d
 	}
 	gobugDir := filepath.Join(dir, "gobug")
 	if err := os.MkdirAll(gobugDir, 0700); err != nil {

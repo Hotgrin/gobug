@@ -73,6 +73,13 @@ wails build        # produces a standalone binary in build/bin
 On Windows, Wails apps need WebView2 (pre-installed on Windows 10/11 in
 almost all cases — Wails will prompt if it's missing).
 
+## Contributing
+
+The rule set is intentionally small and grows from real-world error
+messages, not guesses. See [CONTRIBUTING.md](CONTRIBUTING.md) — adding a
+new rule is a five-minute job. Version history is in
+[CHANGELOG.md](CHANGELOG.md).
+
 ## Distribution plan (once v0.1 feels solid)
 
 Same playbook as `goscan`: GitHub release with cross-platform binaries,
