@@ -45,6 +45,16 @@ that already exist.
 - Proper syntax highlighting instead of a plain (line-numbered) textarea
 - Multi-file / whole-package support instead of single-file snippets
 
+## Download
+
+Prebuilt binaries for Windows, macOS, and Linux are attached to each
+[GitHub Release](https://github.com/hotgrin/gobug/releases) — no need to
+build from source unless you want to.
+
+**macOS note:** the binary isn't code-signed (that costs an Apple
+Developer account), so Gatekeeper will block it on first launch. Right-click
+the app → Open, once, to bypass that.
+
 ## Building it
 
 Clone it first:
