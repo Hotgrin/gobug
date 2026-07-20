@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>gobug</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    background: #0B1D33;
+    color: #EDEEF2;
+    display: flex;
+    flex-direction: column;
+  }
+  header {
+    padding: 10px 16px;
+    border-bottom: 1px solid #24476B;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  header h1 { font-size: 13px; margin: 0; letter-spacing: 0.1em; color: #E8A33D; }
+  #run {
+    background: #E8A33D; border: none; color: #1A1206; font-weight: 700;
+    padding: 7px 16px; border-radius: 2px; cursor: pointer; font-family: inherit; font-size: 12px;
+    letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  #run:disabled { background: #24476B; color: #5C7392; cursor: not-allowed; }
+  main { flex: 1; display: flex; overflow: hidden; }
+
+  /* --- editor pane with line-number gutter --- */
+  #editor-pane {
+    flex: 1; display: flex; background: #0D2039; border-right: 1px solid #24476B; overflow: hidden;
+  }
+  #gutter {
+    flex-shrink: 0; padding: 16px 10px 16px 14px; text-align: right; color: #3E5C7E;
+    font-family: inherit; font-size: 13px; line-height: 1.6; user-select: none;
+    overflow: hidden; white-space: pre;
+  }
+  #code {
+    flex: 1; background: transparent; color: #D6E2F0; border: none;
+    padding: 16px 16px 16px 8px; font-family: inherit; font-size: 13px; line-height: 1.6;
+    resize: none; outline: none; overflow-y: auto; white-space: pre; word-wrap: normal;
+  }
+
+  #output-pane { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  #output-head {
+    padding: 8px 16px; border-bottom: 1px solid #24476B; display: flex;
+    justify-content: space-between; align-items: center; flex-shrink: 0; min-height: 20px;
+  }
+  #output-head span { font-size: 10px; letter-spacing: 0.1em; color: #5C7392; }
+  #copy-error {
+    background: transparent; border: 1px solid #24476B; color: #5FB4DB; font-family: inherit;
+    font-size: 11px; padding: 4px 10px; border-radius: 2px; cursor: pointer; letter-spacing: 0.04em;
+    text-transform: uppercase; display: none;
+  }
+  #copy-error:hover { background: rgba(95,180,219,0.1); }
+  #output { flex: 1; padding: 16px; overflow: auto; font-size: 12.5px; line-height: 1.6; }
+  #output pre { white-space: pre-wrap; word-break: break-word; margin: 8px 0 0; }
+  .ok { color: #6FBF8E; font-weight: 700; }
+  .err { color: #E2665A; font-weight: 700; }
+  .explain {
+    background: #112A47; border-left: 3px solid #5FB4DB; padding: 12px 14px;
+    margin-top: 14px; color: #D6E2F0; white-space: pre-wrap; line-height: 1.7;
+  }
+  .explain::before { content: "EXPLAIN"; display: block; color: #5FB4DB; font-size: 10px; letter-spacing: 0.1em; margin-bottom: 6px; }
+  .placeholder { color: #5C7392; }
+</style>
+</head>
+<body>
+<header>
+  <h1>GOBUG — run area</h1>
+  <button id="run">Run ▶</button>
+</header>
+<main>
+  <div id="editor-pane">
+    <div id="gutter">1</div>
+    <textarea id="code" spellcheck="false">package main
+
+import "fmt"
+
+func main() {
+	fmt.Println("hello, gobug")
+}</textarea>
+  </div>
+  <div id="output-pane">
+    <div id="output-head">
+      <span>OUTPUT</span>
+      <button id="copy-error">Copy error</button>
+    </div>
+    <div id="output"><span class="placeholder">Output will appear here.</span></div>
+  </div>
+</main>
+<script>
+  const runBtn = document.getElementById('run');
+  const codeEl = document.getElementById('code');
+  const gutterEl = document.getElementById('gutter');
+  const outEl = document.getElementById('output');
+  const copyErrBtn = document.getElementById('copy-error');
+  let lastStderr = '';
+
+  function escapeHtml(s) {
+    return (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function updateGutter() {
+    const lineCount = codeEl.value.split('\n').length;
+    let nums = '';
+    for (let i = 1; i <= lineCount; i++) nums += i + '\n';
+    gutterEl.textContent = nums.trimEnd();
+  }
+  function syncGutterScroll() {
+    gutterEl.scrollTop = codeEl.scrollTop;
+  }
+  codeEl.addEventListener('input', updateGutter);
+  codeEl.addEventListener('scroll', syncGutterScroll);
+  // keep tabs sane in a plain textarea
+  codeEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const start = codeEl.selectionStart, end = codeEl.selectionEnd;
+      codeEl.value = codeEl.value.slice(0, start) + '\t' + codeEl.value.slice(end);
+      codeEl.selectionStart = codeEl.selectionEnd = start + 1;
+      updateGutter();
+    }
+  });
+  updateGutter();
+
+  runBtn.addEventListener('click', async () => {
+    runBtn.disabled = true;
+    copyErrBtn.style.display = 'none';
+    lastStderr = '';
+    outEl.innerHTML = '<span class="placeholder">Running...</span>';
+    try {
+      const result = await window.go.main.App.RunCode(codeEl.value);
+      let html = '';
+      if (result.success) {
+        html += '<span class="ok">&#10003; ran successfully</span>';
+        if (result.stdout) html += '<pre>' + escapeHtml(result.stdout) + '</pre>';
+      } else {
+        lastStderr = result.stderr || '';
+        const firstLine = lastStderr.split('\n')[0];
+        html += '<span class="err">&#10007; ' + escapeHtml(firstLine) + '</span>';
+        html += '<pre>' + escapeHtml(lastStderr) + '</pre>';
+        if (result.explanation) {
+          html += '<div class="explain">' + escapeHtml(result.explanation) + '</div>';
+        }
+        copyErrBtn.style.display = 'inline-block';
+      }
+      outEl.innerHTML = html;
+    } catch (e) {
+      outEl.innerHTML = '<span class="err">Error calling backend: ' + escapeHtml(String(e)) + '</span>';
+    } finally {
+      runBtn.disabled = false;
+    }
+  });
+
+  copyErrBtn.addEventListener('click', () => {
+    if (!lastStderr) return;
+    navigator.clipboard.writeText(lastStderr).then(() => {
+      const old = copyErrBtn.textContent;
+      copyErrBtn.textContent = 'Copied';
+      setTimeout(() => copyErrBtn.textContent = old, 1200);
+    });
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+# Wails build output
+build/bin/
+build/windows/
+build/darwin/
+build/linux/
+
+# Go
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+vendor/
+
+# Editor/OS
+.DS_Store
+.idea/
+.vscode/
+*.swp

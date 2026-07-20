@@ -1,0 +1,10 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "gobug",
+  "outputfilename": "gobug",
+  "frontend:install": "",
+  "frontend:build": "",
+  "author": {
+    "name": "AJ Louw"
+  }
+}
