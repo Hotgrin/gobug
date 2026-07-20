@@ -1,17 +1,17 @@
 Windows PowerShell
 Copyright (C) Microsoft Corporation. All rights reserved.
 
-PS C:\1Go\SmallPrograms\gobug> go mod tidy
-PS C:\1Go\SmallPrograms\gobug> wails dev
-Wails CLI v2.12.0
-
-Updating go.mod to use Wails 'v2.12.0'
-Executing: go mod tidy
-  • Generating bindings: Done.
-  • No Install command. Skipping.
-  • No Build command. Skipping.
-
-  ERROR   unable to auto discover frontend:dev:serverUrl without a frontend:dev:watcher command, please either set frontend:dev:watcher or remove the auto discovery from frontend:dev:serverUrl
- ♥   If Wails is useful to you or your company, please consider sponsoring the project:
-https://github.com/sponsors/leaanthony
+PS C:\1Go\SmallPrograms\gobug> git push -u origin main --force
+Enumerating objects: 32, done.
+Counting objects: 100% (32/32), done.
+Delta compression using up to 12 threads
+Compressing objects: 100% (27/27), done.
+Writing objects: 100% (32/32), 202.68 KiB | 16.89 MiB/s, done.
+Total 32 (delta 1), reused 0 (delta 0), pack-reused 0 (from 0)
+remote: Resolving deltas: 100% (1/1), done.
+remote: This repository moved. Please use the new location:
+remote:   https://github.com/Hotgrin/gobug.git
+To https://github.com/hotgrin/gobug.git
+ + fabc08b...7f890d4 main -> main (forced update)
+branch 'main' set up to track 'origin/main'.
 PS C:\1Go\SmallPrograms\gobug>

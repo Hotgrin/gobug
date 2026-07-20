@@ -79,16 +79,13 @@ var rules = []Rule{
 }
 
 // Explain matches raw compiler/vet/runtime output against known patterns and
-// returns a plain-English explanation, or a generic fallback if nothing matches.
-// The fallback is where a BYOK LLM call slots in for v0.2 — deliberately left
-// as a single seam so it's a small change, not a rewrite.
-func Explain(raw string) string {
+// returns a plain-English explanation plus whether a rule actually matched.
+// When matched is false, the caller can fall back to the BYOK AI explainer.
+func Explain(raw string) (string, bool) {
 	for _, r := range rules {
 		if m := r.Pattern.FindStringSubmatch(raw); m != nil {
-			return r.Explain(m)
+			return r.Explain(m), true
 		}
 	}
-	return "gobug doesn't recognize this one yet (v0.1 ships with a starter rule set).\n" +
-		"The raw error is above. This is exactly the kind of case a BYOK AI explain step " +
-		"(coming in v0.2) would take over for."
+	return "gobug's offline rule set doesn't recognize this one yet.", false
 }

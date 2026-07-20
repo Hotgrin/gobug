@@ -20,21 +20,25 @@ them to someone who doesn't yet read Go compiler output fluently. gobug is
 that layer — not a rival static analyzer, a translator on top of the tools
 that already exist.
 
-## v0.1 scope (intentionally small)
+## v0.2 scope
 
-- Single-file "run area" — write/paste Go, click Run
+- Single-file "run area" — write/paste Go, click Run, line-numbered editor
 - Offline rule-based explain engine covering common beginner errors:
   undefined identifiers, type mismatches, unused imports/variables, missing
-  return, nil pointer panics, index-out-of-range panics
-- No API key required to be useful
+  return, nil pointer panics, index-out-of-range panics — no API key needed
+- **BYOK AI fallback**: for errors the rule set doesn't recognize, add your
+  own Anthropic API key in Settings (the gear icon) and gobug will ask
+  Claude to explain it. Only the error message and a small window of
+  surrounding source are sent — never the whole file. The key is stored
+  locally in your OS config dir (`~/.config/gobug/config.json` on
+  Linux/Mac, `%APPDATA%\gobug\config.json` on Windows), never in this repo.
+  Model is configurable in Settings if the default (`claude-sonnet-4-5`)
+  is ever renamed/retired — check https://docs.claude.com for current IDs.
 
 ## Not yet built (roadmap, not promises)
 
-- BYOK LLM fallback for errors the rule set doesn't recognize yet
-  (the seam is already there — see the fallback branch in
-  `engine/rules.go`'s `Explain` function)
 - Piping `golangci-lint` output through the same explain layer
-- Proper code editor (syntax highlighting) instead of a plain textarea
+- Proper syntax highlighting instead of a plain (line-numbered) textarea
 - Multi-file / whole-package support instead of single-file snippets
 
 ## Building it

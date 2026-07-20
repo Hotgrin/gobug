@@ -28,7 +28,44 @@
     letter-spacing: 0.04em; text-transform: uppercase;
   }
   #run:disabled { background: #24476B; color: #5C7392; cursor: not-allowed; }
+  #settings-btn {
+    background: transparent; border: 1px solid #24476B; color: #8CA0BA; font-family: inherit;
+    font-size: 12px; padding: 7px 14px; border-radius: 2px; cursor: pointer;
+  }
+  #settings-btn:hover { border-color: #5FB4DB; color: #5FB4DB; }
   main { flex: 1; display: flex; overflow: hidden; }
+
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(4,10,20,0.7); z-index: 10;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .modal {
+    background: #0F2440; border: 1px solid #24476B; border-radius: 3px; width: 420px;
+    max-width: 90vw; padding: 22px; font-family: 'Inter', sans-serif;
+  }
+  .modal h2 { font-family: 'JetBrains Mono', monospace; font-size: 15px; margin: 0 0 10px; color: #E8A33D; }
+  .modal-hint { font-size: 12px; color: #8CA0BA; line-height: 1.6; margin: 0 0 16px; }
+  .modal-hint-inline { color: #5C7392; font-weight: 400; }
+  .modal label { display: block; font-size: 11px; letter-spacing: 0.06em; color: #8CA0BA; text-transform: uppercase; margin: 12px 0 6px; font-family: 'JetBrains Mono', monospace; }
+  .modal input {
+    width: 100%; background: #0D2039; border: 1px solid #24476B; color: #EDEEF2;
+    font-family: 'JetBrains Mono', monospace; font-size: 13px; padding: 9px 10px; border-radius: 2px; outline: none;
+  }
+  .modal input:focus { border-color: #5FB4DB; }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+  .btn-ghost {
+    background: transparent; border: 1px solid #24476B; color: #8CA0BA; font-family: inherit;
+    font-size: 12px; padding: 8px 16px; border-radius: 2px; cursor: pointer;
+  }
+  .btn-primary {
+    background: #E8A33D; border: none; color: #1A1206; font-weight: 700; font-family: inherit;
+    font-size: 12px; padding: 8px 16px; border-radius: 2px; cursor: pointer;
+  }
+  #settings-status { font-size: 12px; margin-top: 10px; min-height: 16px; }
+  .ai-badge {
+    display: inline-block; font-size: 10px; letter-spacing: 0.08em; color: #E8A33D;
+    border: 1px solid #E8A33D; border-radius: 2px; padding: 1px 6px; margin-left: 8px; vertical-align: middle;
+  }
 
   /* --- editor pane with line-number gutter --- */
   #editor-pane {
@@ -72,8 +109,32 @@
 <body>
 <header>
   <h1>GOBUG — run area</h1>
-  <button id="run">Run ▶</button>
+  <div style="display:flex; gap:8px;">
+    <button id="settings-btn" title="BYOK settings">⚙ Settings</button>
+    <button id="run">Run ▶</button>
+  </div>
 </header>
+
+<div id="settings-modal" class="modal-overlay" style="display:none;">
+  <div class="modal">
+    <h2>BYOK Settings</h2>
+    <p class="modal-hint">
+      gobug's offline rules handle common beginner errors for free. For
+      anything else, add your own Anthropic API key here and gobug will ask
+      Claude to explain it — only the error and a few relevant lines are
+      sent, never your whole file. Your key stays on this machine.
+    </p>
+    <label>API key</label>
+    <input id="settings-key" type="password" placeholder="sk-ant-..." autocomplete="off">
+    <label>Model <span class="modal-hint-inline">(optional override)</span></label>
+    <input id="settings-model" type="text" placeholder="claude-sonnet-4-5">
+    <div class="modal-actions">
+      <button id="settings-cancel" class="btn-ghost">Cancel</button>
+      <button id="settings-save" class="btn-primary">Save</button>
+    </div>
+    <div id="settings-status"></div>
+  </div>
+</div>
 <main>
   <div id="editor-pane">
     <div id="gutter">1</div>
@@ -99,7 +160,43 @@ func main() {
   const gutterEl = document.getElementById('gutter');
   const outEl = document.getElementById('output');
   const copyErrBtn = document.getElementById('copy-error');
+  const settingsBtn = document.getElementById('settings-btn');
+  const settingsModal = document.getElementById('settings-modal');
+  const settingsKey = document.getElementById('settings-key');
+  const settingsModel = document.getElementById('settings-model');
+  const settingsStatus = document.getElementById('settings-status');
   let lastStderr = '';
+
+  settingsBtn.addEventListener('click', async () => {
+    try {
+      const cfg = await window.go.main.App.GetConfig();
+      settingsKey.value = cfg.apiKey || '';
+      settingsModel.value = cfg.model || '';
+    } catch (e) { /* first run, no config yet */ }
+    settingsStatus.textContent = '';
+    settingsModal.style.display = 'flex';
+  });
+  document.getElementById('settings-cancel').addEventListener('click', () => {
+    settingsModal.style.display = 'none';
+  });
+  document.getElementById('settings-save').addEventListener('click', async () => {
+    settingsStatus.textContent = 'Saving...';
+    settingsStatus.style.color = '#8CA0BA';
+    try {
+      const err = await window.go.main.App.SaveConfig(settingsKey.value.trim(), settingsModel.value.trim());
+      if (err) {
+        settingsStatus.textContent = 'Error: ' + err;
+        settingsStatus.style.color = '#E2665A';
+      } else {
+        settingsStatus.textContent = 'Saved.';
+        settingsStatus.style.color = '#6FBF8E';
+        setTimeout(() => { settingsModal.style.display = 'none'; }, 600);
+      }
+    } catch (e) {
+      settingsStatus.textContent = 'Error: ' + e;
+      settingsStatus.style.color = '#E2665A';
+    }
+  });
 
   function escapeHtml(s) {
     return (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -145,7 +242,8 @@ func main() {
         html += '<span class="err">&#10007; ' + escapeHtml(firstLine) + '</span>';
         html += '<pre>' + escapeHtml(lastStderr) + '</pre>';
         if (result.explanation) {
-          html += '<div class="explain">' + escapeHtml(result.explanation) + '</div>';
+          const badge = result.explainedByAI ? '<span class="ai-badge">AI</span>' : '';
+          html += '<div class="explain">' + badge + escapeHtml(result.explanation) + '</div>';
         }
         copyErrBtn.style.display = 'inline-block';
       }
